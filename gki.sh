@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 BASE="https://android.googlesource.com"
 DEFAULT_REV="master-kernel-build-2021"
@@ -8,26 +8,32 @@ ROOT="$HOME/kernel"
 mkdir -p "$ROOT"
 cd "$ROOT"
 
-echo "==> Cloning kernel/build"
-git clone --depth=1 -b "$DEFAULT_REV" "$BASE/kernel/build" build
+clone_repo() {
+  local url="$1" branch="$2" dest="$3"
 
-echo "==> Cloning kernel/configs"
-git clone --depth=1 -b "$DEFAULT_REV" "$BASE/kernel/configs" kernel/configs
+  if [ -d "$dest/.git" ]; then
+    echo "==> [skip] $dest udah ada"
+    return
+  fi
 
-echo "==> Cloning kernel/common-modules/virtual-device"
-git clone --depth=1 -b android12-5.10 "$BASE/kernel/common-modules/virtual-device" common-modules/virtual-device
+  if [ -d "$dest" ]; then
+    echo "==> [warn] $dest ada tapi bukan git repo, hapus dulu manual kalo mau clone ulang"
+    return
+  fi
 
-echo "==> Cloning prebuilts: clang"
-git clone --depth 1 -b "$DEFAULT_REV" "$BASE/platform/prebuilts/clang/host/linux-x86" prebuilts-master/clang/host/linux-x86
+  echo "==> Cloning $dest (depth=1)"
+  mkdir -p "$(dirname "$dest")"
+  git clone --depth=1 -b "$branch" "$url" "$dest"
+}
 
-echo "==> Cloning prebuilts: gcc"
-git clone --depth 1 -b "$DEFAULT_REV" "$BASE/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8" prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8
+clone_repo "$BASE/kernel/build" "$DEFAULT_REV" "build"
+clone_repo "$BASE/kernel/configs" "$DEFAULT_REV" "kernel/configs"
+clone_repo "$BASE/kernel/common-modules/virtual-device" "android12-5.10" "common-modules/virtual-device"
+clone_repo "$BASE/platform/prebuilts/clang/host/linux-x86" "$DEFAULT_REV" "prebuilts-master/clang/host/linux-x86"
+clone_repo "$BASE/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8" "$DEFAULT_REV" "prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8"
+clone_repo "$BASE/platform/prebuilts/build-tools" "$DEFAULT_REV" "prebuilts/build-tools"
+clone_repo "$BASE/kernel/prebuilts/build-tools" "$DEFAULT_REV" "prebuilts/kernel-build-tools"
+clone_repo "$BASE/platform/system/tools/mkbootimg" "$DEFAULT_REV" "tools/mkbootimg"
 
-echo "==> Cloning prebuilts: build-tools"
-git clone --depth 1 -b "$DEFAULT_REV" "$BASE/platform/prebuilts/build-tools" prebuilts/build-tools
-
-echo "==> Cloning prebuilts: kernel-build-tools"
-git clone --depth 1 -b "$DEFAULT_REV" "$BASE/kernel/prebuilts/build-tools" prebuilts/kernel-build-tools
-
-echo "==> Cloning tools/mkbootimg"
-git clone --depth=1 -b "$DEFAULT_REV" "$BASE/platform/system/tools/mkbootimg" tools/mkbootimg
+mkdir -p common
+echo "==> Selesai. Folder 'common' disiapin kosong — taro kernel source lu sendiri di situ."
