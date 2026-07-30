@@ -1,5 +1,5 @@
-#!/bin/bash
-# Android 12-5.10 Kernel Build Script
+#!/usr/bin/env bash
+
 set -euo pipefail
 
 # --- Configuration ---------------------------------------------------------
@@ -12,7 +12,9 @@ CLANG_HOME="$TOOLCHAIN_ROOT/clang-${LLVM_MAJOR}"
 OUT_DIR="out"
 TARGET_ARCH="arm64"
 LOCAL_VERSION="-Rufnxprjkt-GKI-2026"
-rc=0  # Di-set oleh EXIT trap saat failure, dibaca dari trap itu juga.
+KERNEL_DIR="$PWD"
+LTO_TYPE="${1:-thin}"  # default: thin. Override: ./build.sh none|thin|full
+rc=0
 
 # --- Logging ---------------------------------------------------------------
 log_info() { printf '\033[0;32m[INFO]\033[0m %s\n' "$1"; }
@@ -50,42 +52,49 @@ fetch_toolchain() {
 # --- Kernel Build Steps ----------------------------------------------------
 setup_environment() {
     export PATH="$CLANG_HOME/bin:$PATH" LLVM=1 LLVM_IAS=1 \
-           ARCH="$TARGET_ARCH" LOCALVERSION="$LOCAL_VERSION" LTO=$1
+           ARCH="$TARGET_ARCH" LOCALVERSION="$LOCAL_VERSION"
 }
 
 configure_kernel() {
-    log_info "Menyiapkan konfigurasi kernel..."
+    log_info "Menyiapkan konfigurasi kernel (LTO=$LTO)..."
     mkdir -p "$OUT_DIR"
     printf '%s' "-g$(git rev-parse --short HEAD 2>/dev/null || true)" > .scmversion
     make O="$OUT_DIR" gki_defconfig
-    set -x                                                                      
+
+    set -x
     if [ "${LTO}" = "none" ]; then
-      ${KERNEL_DIR}/scripts/config --file ${OUT_DIR}/.config \
-      -d LTO_CLANG \
-      -e LTO_NONE \                                                             
-      -d LTO_CLANG_THIN \                                                         
-      -d LTO_CLANG_FULL \                                                         
-      -d THINLTO                                                              
+      "${KERNEL_DIR}/scripts/config" --file "${OUT_DIR}/.config" \
+        -d LTO_CLANG \
+        -e LTO_NONE \
+        -d LTO_CLANG_THIN \
+        -d LTO_CLANG_FULL \
+        -d THINLTO
     elif [ "${LTO}" = "thin" ]; then
-      ${KERNEL_DIR}/scripts/config --file ${OUT_DIR}/.config \
-      -e LTO_CLANG \
-      -d LTO_NONE \
-      -e LTO_CLANG_THIN \
-      -d LTO_CLANG_FULL \
-      -e THINLTO
+      "${KERNEL_DIR}/scripts/config" --file "${OUT_DIR}/.config" \
+        -e LTO_CLANG \
+        -d LTO_NONE \
+        -e LTO_CLANG_THIN \
+        -d LTO_CLANG_FULL \
+        -e THINLTO
     elif [ "${LTO}" = "full" ]; then
-      ${KERNEL_DIR}/scripts/config --file ${OUT_DIR}/.config \
-      -e LTO_CLANG \
-      -d LTO_NONE \                                                               
-      -d LTO_CLANG_THIN \
-      -e LTO_CLANG_FULL \
-      -d THINLTO                                                              
+      "${KERNEL_DIR}/scripts/config" --file "${OUT_DIR}/.config" \
+        -e LTO_CLANG \
+        -d LTO_NONE \
+        -d LTO_CLANG_THIN \
+        -e LTO_CLANG_FULL \
+        -d THINLTO
+    else
+      set +x
+      log_err "Nilai LTO tidak valid: '${LTO}' (harus none/thin/full)"
+      return 1
     fi
+    set +x
+
     make O="$OUT_DIR" olddefconfig savedefconfig
 }
 
 build_kernel() {
-    log_info "Memulai kompilasi kernel (Image)..."
+    log_info "Memulai kompilasi kernel..."
     make -j"$(nproc --all)" O="$OUT_DIR" Image
 }
 
@@ -112,7 +121,7 @@ main() {
     trap 'rc=$?; if (( rc )); then log_err "Build gagal (exit=$rc) setelah $((SECONDS/60))m $((SECONDS%60))s"; fi' EXIT
 
     fetch_toolchain "clang-$LLVM_MAJOR" "$CLANG_URL" "$CLANG_HOME" bin/clang
-    setup_environment
+    setup_environment "$LTO_TYPE"
     configure_kernel
     build_kernel
 
