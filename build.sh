@@ -3,15 +3,15 @@
 set -euo pipefail
 
 # --- Configuration ---------------------------------------------------------
-readonly LLVM_VERSION="23.1.0-rc1"
-readonly LLVM_ARCH="x86_64"
-readonly LLVM_MAJOR="${LLVM_VERSION%%.*}"
-readonly TOOLCHAIN_ROOT="$HOME/kernel/toolchain"
-readonly CLANG_URL="https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-${LLVM_VERSION}-${LLVM_ARCH}.tar.xz"
-readonly CLANG_HOME="$TOOLCHAIN_ROOT/clang-${LLVM_MAJOR}"
-readonly OUT_DIR="out"
-readonly TARGET_ARCH="arm64"
-readonly LOCAL_VERSION="-Rufnxprjkt-GKI-2026"
+LLVM_VERSION="23.1.0-rc1"
+LLVM_ARCH="x86_64"
+LLVM_MAJOR="${LLVM_VERSION%%.*}"
+TOOLCHAIN_ROOT="$HOME/kernel/toolchain"
+CLANG_URL="https://mirrors.edge.kernel.org/pub/tools/llvm/files/llvm-${LLVM_VERSION}-${LLVM_ARCH}.tar.xz"
+CLANG_HOME="$TOOLCHAIN_ROOT/clang-${LLVM_MAJOR}"
+OUT_DIR="out"
+TARGET_ARCH="arm64"
+LOCAL_VERSION="-Rufnxprjkt-GKI-2026"
 rc=0  # Di-set oleh EXIT trap saat failure, dibaca dari trap itu juga.
 
 # --- Logging ---------------------------------------------------------------
