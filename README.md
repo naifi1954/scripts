@@ -5,5 +5,5 @@ curl -LSs https://raw.githubusercontent.com/naifi1954/kernel_gki_manifest/refs/h
 
 # Build
 ```
-LTO=thin BUILD_CONFIG=build.config.gki.aarch64 build/build.sh
+LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
 ```
