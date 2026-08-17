@@ -32,4 +32,4 @@ clone_repo "$BASE/platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4
 clone_repo "$BASE/platform/prebuilts/build-tools" "$DEFAULT_REV" "prebuilts/build-tools"
 clone_repo "$BASE/kernel/prebuilts/build-tools" "$DEFAULT_REV" "prebuilts/kernel-build-tools"
 clone_repo "$BASE/platform/system/tools/mkbootimg" "$DEFAULT_REV" "tools/mkbootimg"
-clone_repo "https://github.com/naifi1954/kernel_common.git" "nethunter" "common"
+clone_repo "https://github.com/naifi1954/kernel_common.git" "android12-5.10" "common"
